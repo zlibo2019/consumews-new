@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:lang="http://www.springframework.org/schema/lang"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd 
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang.xsd">
+
+     <context:component-scan base-package="com.garen">  
+     	<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />  
+ 	 </context:component-scan>   
+       
+     <!--  数据源的配置 jndi  -->
+    <bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="java:comp/env/jdbc/consumedb1"></property>
+    </bean>
+     
+    <bean id="jdbctransactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource"><ref bean="dataSource"/></property>
+	</bean>
+    
+    <!-- 注解事务 事务作用在接口上 -->
+    <tx:annotation-driven transaction-manager="jdbctransactionManager" />
+     
+<!-- 启用AspectJ对Annotation的支持 -->         
+   <aop:aspectj-autoproxy />     
+    
+</beans>
