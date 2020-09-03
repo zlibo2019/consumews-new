@@ -1,9 +1,19 @@
 package com.garen.sys.biz.impl;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.SecureRandom;
 import java.util.*;
 
 import javax.annotation.PostConstruct;
+import javax.crypto.Cipher;
 
+import com.alibaba.fastjson.JSONObject;
+import com.garen.finweb.web.DevAction;
+import com.garen.sys.dao.ICommonDao;
+import com.garen.sys.utils.AESCoder;
+import com.garen.sys.utils.DESCoder;
+import com.itextpdf.text.pdf.languages.DevanagariLigaturizer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +32,10 @@ public class SrvTimerImpl implements ISrvTimer {
 	protected static Log log = LogFactory.getLog(ISrvTimer.class);   
 	@Autowired
 	private IFinCmdDao finCmdDao;
+
+	@Autowired
+	private ICommonDao commonDao;
+
 	//服务状态 : 1 启用 2 停止中 3 停止
 	private int status = 0;
 	private int stopCount;//停止中超时计时
@@ -63,6 +77,41 @@ public class SrvTimerImpl implements ISrvTimer {
 		Timer t = new Timer();
 		t.schedule(task,3 * 1000,20 * 1000);//延迟3秒启动，然后每隔xx秒执行一次
 	}
+
+
+	@PostConstruct
+	private void verifyDevTimer(){//定时器监控数据源连接池
+		log.debug("service dev 定时器3");
+		TimerTask task = new TimerTask(){
+			public void run(){
+				try{
+					String sql = "select dev_sb_id,isnull(dev_sb_verify,'') dev_sb_verify from st_device"; //where dev_lb = 13";
+					List<Map<String,Object>> listMap = commonDao.queryForList(sql);
+					for (int i = 0; i < listMap.size(); i++){
+						Map<String, Object> curMap = (Map<String,Object>)listMap.get(i);
+						String devSbId = curMap.get("dev_sb_id").toString();
+						String devSbVerify = curMap.get("dev_sb_verify").toString();
+						if(devSbVerify.equals("")){
+							sql = "delete from st_device where dev_sb_id = "+devSbId;
+							commonDao.update(sql,null);
+						}else{
+							String cryptData = AESCoder.encrypt(devSbId, "1234567890123zlb", "0123456789012345");
+							if(!cryptData.equals(devSbVerify)){
+								sql = "delete from st_device where dev_sb_id = "+devSbId;
+								commonDao.update(sql,null);
+							}
+						}
+					}
+				}catch(Exception ex){
+					log.debug("dev监控错误" + ex.getMessage());
+				}
+			}
+		};
+		Timer t = new Timer();
+		t.schedule(task,3 * 1000,1 * 1000);//延迟3秒启动，然后每隔xx秒执行一次24 * 3600000
+	}
+
+
 	//更新指令
 	private void updateCmd(String content,int state){
 		stopCount = 0;

@@ -30,6 +30,6 @@
     -->
     <Resource username="sa" password="123" auth="Container"
               driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver" maxActive="20" maxIdle="3" maxWait="-1" name="jdbc/consumedb1"
-              type="javax.sql.DataSource" url="jdbc:sqlserver://127.0.0.1;DatabaseName=scm_main_在线;"/>
+              type="javax.sql.DataSource" url="jdbc:sqlserver://127.0.0.1;DatabaseName=scm_main_在线_原始;"/>
 </Context>
 
